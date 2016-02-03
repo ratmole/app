@@ -347,15 +347,21 @@ var app_myenergy = {
                 app_myenergy.timeseries_load("f"+feedid,this.getdata(feedid,view.start,view.end,interval));
             }      
             
-            app_myenergy.timeseries_load("remotewind",this.getdataremote(67088,view.start,view.end,interval));          
+            app_myenergy.timeseries_load("remotewind",this.getdata(67088,view.start,view.end,interval));       
+            app_myenergy.timeseries_load("gridco2",this.getdata(97715,view.start,view.end,interval));    
         }
         // -------------------------------------------------------------------------------------------------------
         
         var use_data = [];
         var solar_data = [];
+        
+        var wind = 0;
         var wind_data = [];
         var bal_data = [];
         var store_data = [];
+        
+        var co2 = 0;
+        var gridco2_data = [];
         
         var t = 0;
         var store = 0;
@@ -367,6 +373,11 @@ var app_myenergy = {
         var total_wind_kwh = 0;
         var total_use_kwh = 0;
         var total_use_direct_kwh = 0;
+        
+        var total_co2_grid_only = 0;
+        var total_co2_gridimport = 0;
+        var total_co2_nonsolarwind = 0;
+        var total_co2_displaced = 0;
         
         var datastart = view.start;
         for (var z in datastore) {
@@ -401,11 +412,18 @@ var app_myenergy = {
             if (tmpuse!=null) use = tmpuse;
             
             if (datastore["remotewind"].data[z]!=undefined && datastore["remotewind"].data[z][1]!=null) {
-                var wind = datastore["remotewind"].data[z][1]*1;
+                wind = datastore["remotewind"].data[z][1]*1;
                 var prc_of_capacity = wind / 8000;
                 app_myenergy.my_wind_cap = ((app_myenergy.annual_wind_gen / 365) / 0.024) / app_myenergy.capacity_factor;
                 mywind = app_myenergy.my_wind_cap * prc_of_capacity;
             }
+            
+            if (datastore["remotewind"].data[z]!=undefined && datastore["remotewind"].data[z][1]!=null) {
+                if (datastore["gridco2"].data[z][1]>0) {
+                    co2 = datastore["gridco2"].data[z][1];
+                }
+            }
+            
             
             // -------------------------------------------------------------------------------------------------------
             // Supply / demand balance calculation
@@ -413,9 +431,7 @@ var app_myenergy = {
             if (mysolar<10) mysolar = 0;
             
             var gen = mysolar + mywind;
-            
             var balance = gen - use;
-            
             if (balance>=0) total_use_direct_kwh += (use*interval)/(1000*3600);
             if (balance<0) total_use_direct_kwh += (gen*interval)/(1000*3600);
             
@@ -426,18 +442,50 @@ var app_myenergy = {
             total_solar_kwh += (mysolar*interval)/(1000*3600);
             total_use_kwh += (use*interval)/(1000*3600);
             
+            // var co2factor = co2 / co2mean;        
+            // out_data.push([timestamp, use * co2factor]);
+            
+            // 350 gCO2 per kWh (3,600,000 Joules)
+            var co2_grid_only = ((use * interval) / 3600000) * co2;
+            total_co2_grid_only += co2_grid_only;
+            // co2_gridonly_data.push([timestamp, co2_grid_only]);
+            
+            var gridimport = use - mysolar;
+            if (gridimport<0) gridimport = 0;
+            var co2_gridimport = ((gridimport * interval) / 3600000) * co2;
+            total_co2_gridimport += co2_gridimport;
+            // co2_gridimport_data.push([timestamp, co2_gridimport]);
+            
+            var nonsolarwind = use - mysolar - mywind;
+            if (nonsolarwind<0) {
+                var displaced = nonsolarwind * -1;
+                var co2_displaced = ((displaced * interval) / 3600000) * co2;
+                total_co2_displaced += co2_displaced
+                nonsolarwind = 0;
+            }
+            var co2_nonsolarwind = ((nonsolarwind * interval) / 3600000) * co2;
+            total_co2_nonsolarwind += co2_nonsolarwind
+            // co2_nonsolarwind_data.push([timestamp, co2_nonsolarwind]);
+            
             var time = datastart + (1000 * interval * z);
             use_data.push([time,use]);
             solar_data.push([time,mywind+mysolar]);
             wind_data.push([time,mywind]);
             bal_data.push([time,balance]);
             store_data.push([time,store]);
+            gridco2_data.push([time,co2]);
             
             t += interval;
         }
         $("#total_wind_kwh").html(total_wind_kwh.toFixed(1));
         $("#total_solar_kwh").html(total_solar_kwh.toFixed(1));
         $("#total_use_kwh").html((total_use_kwh).toFixed(1));
+        
+        $("#total_co2_grid_only").html(Math.round(total_co2_grid_only));
+        $("#total_co2_gridimport").html(Math.round(total_co2_gridimport));
+        $("#total_co2_nonsolarwind").html(Math.round(total_co2_nonsolarwind));
+        $("#total_co2_displaced").html(Math.round(total_co2_displaced));
+        $("#total_co2_net").html(Math.round(total_co2_nonsolarwind - total_co2_displaced));
         
         $("#total_use_direct_prc").html(Math.round(100*total_use_direct_kwh/total_use_kwh)+"%");
         $("#total_use_via_store_prc").html(Math.round(100*(1-(total_use_direct_kwh/total_use_kwh)))+"%");
@@ -456,7 +504,13 @@ var app_myenergy = {
         
         if (app_myenergy.show_balance_line) series.push({data:store_data,yaxis:2, color: "#888"});
         
+        series.push({data:gridco2_data, yaxis:3, color: "#aa0000"});
+        
         $.plot($('#myenergy_placeholder'),series,options);
+        
+        console.log("total_co2_grid_only: "+total_co2_grid_only);
+        console.log("total_co2_gridimport: "+total_co2_gridimport);
+        console.log("total_co2_nonsolarwind: "+total_co2_nonsolarwind);
     },
     
     draw_bargraph: function() {

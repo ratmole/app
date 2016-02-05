@@ -3,7 +3,7 @@
     <div id="myenergy-config" style="display:none; ">
         
         <div class="electric-title">APP CONFIG</div><br>
-        <p>This app can be used to compare electricity consumption with electricity generation from renewable energy generation sources including onsite solar and wind power from the UK grid.</p><p>The estimate of the amount of power available from UK wind power is calculated by taking the realtime electricity production from wind in the uk now available from bmreports.com divided by the UK installed wind capacity multipled by the amount of wind capacity requried to generate the annual demand at a capacity factor of 40%. This work builds upon the open source hourly energy modelling work that we have been doing with the Center for Alternative Technology <a href="http://zerocarbonbritain.org/energy_model">http://zerocarbonbritain.org/energy_model</a></p>
+        <p>This app can be used to compare electricity consumption with electricity generation from renewable energy generation sources including onsite solar and wind power from the UK grid.</p><p>The estimate of the amount of power available from UK wind power at any given moment is calculated using real-time wind data from bmreports.com and a semi-rolling 12 month average of uk wind power output.</p><p>Wind available for household now in Watts = (annual purchased wind kwh / annual total uk metered wind kwh) x realtime metered wind output now in Watts.</p><p>UK metered wind generated 22,877 GWh of electricity between February 2015 and February 2016.</p><p>This work builds upon the open source hourly energy modelling work that we have been doing with the Center for Alternative Technology <a href="http://zerocarbonbritain.org/energy_model">http://zerocarbonbritain.org/energy_model</a></p>
         
         <table class="table">
         <tr>
@@ -18,9 +18,11 @@
             <td style="border:0;">
                 <p>Annual wind generation supplied<br>from renewable energy tariff (kWh)</p>
                 <input id="myenergy-annualwind" type="text" />
-                <p>Wind capacity required: <span id="myenergy-windcap"></span><br><span id="myenergy-prc3mw"></span>% of a 3MW Wind turbine @ 40% capacity factor</p>
             </td>
         </table>
+        
+        <br>
+        <p>The orange line on the graph is the CO2 intensity of the UK electricity grid and the CO2 figures at the bottom are calculated using realtime grid CO2 data.</p> 
         
         <br><br>
         <p style="color:#888; text-align:center"><b>Configuration:</b> This dashboard automatically looks for feeds named or containing the words: solar_power, house_power. To use this dashboard add these names to the relevant feeds.</p>
@@ -51,6 +53,7 @@
             <div class="electric-title">RENEWABLE GEN</div>
             <div class="power-value"><span id="gennow">0</span>W</div>
             <div class="electric-title"><span style="color:#dccc1f">SOLAR: <span id="solarnow">0</span>W</span> | <span style="color:#2ed52e">WIND: <span id="windnow">0</span>W</span></div>
+            <div class="electric-title"><span style="color:#d06709">GRID CO2: <span id="co2now">0</span>gCO2/kWh</span></div>
         </td>
         
     </tr>
@@ -169,12 +172,12 @@
 
         <td class="appbox" width="20%">
             <div class="appbox-title">Displaced CO2</div>
-            <div><span class="appbox-value" id="total_co2_displaced" style="color:#aaa">0</span> <span class="appbox-units" style="color:#aaa">gCO2</span></div>
+            <div><span class="appbox-value" id="total_co2_displaced" style="color:#666">0</span> <span class="appbox-units" style="color:#666">gCO2</span></div>
         </td>
         
         <td class="appbox" width="20%">
             <div class="appbox-title">Net CO2</div>
-            <div><span class="appbox-value" id="total_co2_net" style="color:#aaa">0</span> <span class="appbox-units" style="color:#aaa">gCO2</span></div>
+            <div><span class="appbox-value" id="total_co2_net" style="color:#666">0</span> <span class="appbox-units" style="color:#666">gCO2</span></div>
         </td>
                 
     </tr>

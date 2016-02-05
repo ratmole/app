@@ -1,5 +1,8 @@
 var datastore = {};
 
+var national_wind_now = 0;
+var co2now = 0;
+
 var app_myenergy = {
 
     solarpower: false,
@@ -57,7 +60,7 @@ var app_myenergy = {
         
         this.my_wind_cap = ((this.annual_wind_gen / 365) / 0.024) / this.capacity_factor;
         
-        var timeWindow = (3600000*6.0*1);
+        var timeWindow = (3600000*24.0*7);
         view.end = +new Date;
         view.start = view.end - timeWindow;
         
@@ -106,8 +109,6 @@ var app_myenergy = {
             $("#myenergy-housepower").val(app_myenergy.housepower);
             
             $("#myenergy-annualwind").val(app_myenergy.annual_wind_gen);
-            $("#myenergy-windcap").html(Math.round(app_myenergy.my_wind_cap)+"W");
-            $("#myenergy-prc3mw").html((100*app_myenergy.my_wind_cap / 5000000).toFixed(3));
             
             $("#myenergy-config").show();
             
@@ -120,7 +121,6 @@ var app_myenergy = {
             var housefeedids = $("#myenergy-housepower").val().split(",");
             app_myenergy.solarpower = solarfeedids;
             app_myenergy.housepower = housefeedids;
-            app_myenergy.my_wind_cap = ((app_myenergy.annual_wind_gen / 365) / 0.024) / app_myenergy.capacity_factor;
             
             // Save config to db
             var config = app.config;
@@ -258,14 +258,17 @@ var app_myenergy = {
             }
         }
         
-        var national_wind = app_myenergy.getvalueremote(67088);
-        var prc_of_capacity = national_wind / 8000;
-        app_myenergy.wind_now = app_myenergy.my_wind_cap * prc_of_capacity;
-        var wind_now = app_myenergy.wind_now;
+        national_wind_now = 1.0*app_myenergy.getvalue(67088);
+        var wind_now = (app_myenergy.annual_wind_gen / 22877000000) * (national_wind_now * 1000000);
+        
+        co2now = app_myenergy.getvalue(97715)*1.0;
         
         if (app_myenergy.autoupdate) {
-            app_myenergy.timeseries_append("remotewind",now,national_wind);
+            app_myenergy.timeseries_append("remotewind",now,national_wind_now);
             app_myenergy.timeseries_trim_start("remotewind",view.start*0.001);
+
+            app_myenergy.timeseries_append("gridco2",now,co2now);
+            app_myenergy.timeseries_trim_start("gridco2",view.start*0.001);
         }
         
         
@@ -301,7 +304,7 @@ var app_myenergy = {
         $("#gennow").html(Math.round(gen_now));
         $("#solarnow").html(Math.round(solar_now));
         $("#windnow").html(Math.round(wind_now));
-        
+        $("#co2now").html(Math.round(co2now));
         $("#usenow").html(use_now);
         
         app_myenergy.draw();
@@ -413,12 +416,11 @@ var app_myenergy = {
             
             if (datastore["remotewind"].data[z]!=undefined && datastore["remotewind"].data[z][1]!=null) {
                 wind = datastore["remotewind"].data[z][1]*1;
-                var prc_of_capacity = wind / 8000;
-                app_myenergy.my_wind_cap = ((app_myenergy.annual_wind_gen / 365) / 0.024) / app_myenergy.capacity_factor;
-                mywind = app_myenergy.my_wind_cap * prc_of_capacity;
+                
+                mywind = (app_myenergy.annual_wind_gen / 22877000000) * (wind * 1000000);
             }
             
-            if (datastore["remotewind"].data[z]!=undefined && datastore["remotewind"].data[z][1]!=null) {
+            if (datastore["gridco2"].data[z]!=undefined && datastore["gridco2"].data[z][1]!=null) {
                 if (datastore["gridco2"].data[z][1]>0) {
                     co2 = datastore["gridco2"].data[z][1];
                 }
@@ -504,7 +506,7 @@ var app_myenergy = {
         
         if (app_myenergy.show_balance_line) series.push({data:store_data,yaxis:2, color: "#888"});
         
-        series.push({data:gridco2_data, yaxis:3, color: "#aa0000"});
+        series.push({data:gridco2_data, yaxis:3, color: "#d06709"});
         
         $.plot($('#myenergy_placeholder'),series,options);
         
@@ -677,6 +679,19 @@ var app_myenergy = {
             data: "id="+id, dataType: 'text', async: false,                      
             success: function(data_in) {
                 value = data_in;
+            } 
+        });
+        return value;
+    },
+    
+    getvalue: function(id)
+    {   
+        var value = 0;
+        $.ajax({                                      
+            url: path+"feed/value.json",                       
+            data: "id="+id, dataType: 'json', async: false,                      
+            success: function(data_in) {
+                value = parseFloat(data_in);
             } 
         });
         return value;

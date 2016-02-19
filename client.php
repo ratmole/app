@@ -1,6 +1,12 @@
 <?php
-    global $path; 
-    $apikey = $_GET['apikey'];
+    global $path, $session, $user; 
+    if (isset($_GET['readkey'])) {
+        $apikey = $_GET['readkey'];
+    } elseif (isset($_GET['apikey'])) {
+        $apikey = $_GET['apikey'];
+    }
+    
+    if (isset($session['write']) && $session['write']) $apikey = $user->get_apikey_write($session['userid']);
 ?>
 
 <script>

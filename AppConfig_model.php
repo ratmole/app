@@ -49,7 +49,7 @@ class AppConfig
                         foreach ($value as $val) $tmp[] = (int) $val;
                         $value = $tmp;
                     } else {
-                        $value = preg_replace("/[^A-Za-z0-9,;£$.&]/",'',$value);
+//                        $value = preg_replace("/[^A-Za-z0-9,;£$.&]/",'',$value);
                         if ($value!=$value) return array('success'=>false, "message"=>"Invalid characters in config value");
                     }
                     

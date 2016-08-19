@@ -1,11 +1,10 @@
-
 var app_myelectric = {
 
     config: {
-        "use":{"type":"feed", "autoname":"use", "engine":"5", "description":"House or building use in watts"},
-        "use_kwh":{"type":"feed", "autoname":"use_kwh", "engine":5, "description":"Cumulative use in kWh"},
-        "unitcost":{"type":"value", "default":0.1508, "name": "Unit cost", "description":"Unit cost of electricity £/kWh"},
-        "currency":{"type":"value", "default":"£", "name": "Currency", "description":"Currency symbol (£,$..)"}
+        "use":{"type":"feed", "autoname":"use", "engine":"5,6", "description":"House or building use in watts"},
+        "use_kwh":{"type":"feed", "autoname":"use_kwh", "engine":"5,6", "description":"Cumulative use in kWh"},
+        "unitcost":{"type":"value", "default":"0.2018794", "name": "Unit cost", "description":"Unit cost of electricity €/kWh"},
+        "currency":{"type":"value", "default":"€", "name": "Currency", "description":"Currency symbol (£,$,€.)"}
     },
     
     daily_data: [],
@@ -102,7 +101,7 @@ var app_myelectric = {
         // called from withing resize:
         // app_myelectric.fastupdate();
         // app_myelectric.slowupdate();
-        app_myelectric.fastupdateinst = setInterval(app_myelectric.fastupdate,5000);
+        app_myelectric.fastupdateinst = setInterval(app_myelectric.fastupdate,2000);
         app_myelectric.slowupdateinst = setInterval(app_myelectric.slowupdate,60000);
     },
     
@@ -235,6 +234,8 @@ var app_myelectric = {
             // 1000W for an hour (x3600) = 3600000 Joules / 3600,000 = 1.0 kWh x 0.15p = 0.15p/kWh (scaling factor is x3600 / 3600,000 = 0.001)
             $("#myelectric_powernow").html(app_myelectric.config.currency.value+(feeds[use].value*1*app_myelectric.config.unitcost.value*0.001).toFixed(3)+"/hr");
         }
+        document.title = (feeds[use].value*1).toFixed(0)+"W - "+(feeds[use].value*1*app_myelectric.config.unitcost.value*0.001).toFixed(2)+app_myelectric.config.currency.value+"/hr";
+
         // Advance view
         if (app_myelectric.autoupdate) {
 
@@ -268,8 +269,8 @@ var app_myelectric = {
             yaxis: {
                 title: "Power (Watts)",
                 units: "W",
-                minor_tick: 250,
-                major_tick: 1000
+                minor_tick: 50,
+                major_tick: 150
             }
         };
         
@@ -278,6 +279,10 @@ var app_myelectric = {
         if (timewindowhours<=24*7) options.xaxis.major_tick = 24*3600*1000;
         if (timewindowhours<=24) options.xaxis.major_tick = 2*3600*1000;
         if (timewindowhours<=12) options.xaxis.major_tick = 1*3600*1000;
+	if (timewindowhours<=6) options.xaxis.major_tick = 0.5*3600*1000;
+        if (timewindowhours<=3) options.xaxis.major_tick = 0.25*3600*1000;
+        if (timewindowhours<=1) options.xaxis.major_tick = 0.125*3600*1000;
+
         options.xaxis.minor_tick = options.xaxis.major_tick / 4;
         
         
@@ -393,16 +398,16 @@ var app_myelectric = {
         if (data.length>0) {
             var lastday = data[data.length-1][0];
             
-            var d = new Date();
-            d.setHours(0,0,0,0);
-            if (lastday==d.getTime()) {
+//            var d = new Date();
+//            d.setHours(0,0,0,0);
+//            if (lastday==d.getTime()) {
                 // last day in kwh data matches start of today from the browser's perspective
                 // which means its safe to append today kwh value
                 var next = data[data.length-1][0] + (interval*1000);
                 if (app_myelectric.feeds[use_kwh]!=undefined) {
                     data.push([next,app_myelectric.feeds[use_kwh].value*1.0]);
                 }
-            }
+//            }
         
             // Calculate the daily totals by subtracting each day from the day before
             

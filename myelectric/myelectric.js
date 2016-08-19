@@ -46,7 +46,8 @@ var app_myelectric = {
     init: function()
     {   
         app.log("INFO","myelectric init");
-    
+
+	$("[time=3]").attr('style', 'color: #ffffff !important');
         var timewindow = (3600000*3.0*1);
         view.end = +new Date;
         view.start = view.end - timewindow;
@@ -61,6 +62,8 @@ var app_myelectric = {
         $('#myelectric_left').click(function () {view.panleft(); app_myelectric.reload = true; app_myelectric.autoupdate = false; app_myelectric.fastupdate();});
         
         $('.myelectric-time').click(function () {
+	    $('.myelectric-time').attr('style', 'color: ');
+	    $(this).attr('style', 'color: #ffffff !important');
             view.timewindow($(this).attr("time")/24.0); 
             app_myelectric.reload = true; 
             app_myelectric.autoupdate = true;
@@ -177,12 +180,16 @@ var app_myelectric = {
     
         if (app_myelectric.viewmode=="energy") {
             scale = 1;
+            $('.myelectric-view-cost').attr('style', 'color: ');
+	    $('.myelectric-view-kwh').attr('style', 'color: #0699fa !important');
             $("#myelectric_usetoday_units_a").html("");
             $("#myelectric_usetoday_units_b").html(" kWh");
             $(".u1a").html(""); $(".u1b").html("kWh");
             $(".u2a").html(""); $(".u2b").html(" kWh/d");
         } else {
             scale = app_myelectric.config.unitcost.value;
+	    $('.myelectric-view-cost').attr('style', 'color: #0699fa !important');
+            $('.myelectric-view-kwh').attr('style', 'color: ');
             $("#myelectric_usetoday_units_a").html(app_myelectric.config.currency.value);
             $("#myelectric_usetoday_units_b").html("");
             $(".u1a").html(app_myelectric.config.currency.value); $(".u1b").html("");

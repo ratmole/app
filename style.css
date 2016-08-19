@@ -103,10 +103,13 @@ input[type=text] {
 }
 
 .visnav:hover {
+    color:#ffffff;
+    cursor: pointer;
+}
+.myelectric-view-cost:hover, .myelectric-view-kwh:hover {
     color:#0699fa;
     cursor: pointer;
 }
-
 .visnav {
     margin-right:4px;
     padding-left:8px;

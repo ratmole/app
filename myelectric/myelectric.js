@@ -104,7 +104,7 @@ var app_myelectric = {
         // called from withing resize:
         // app_myelectric.fastupdate();
         // app_myelectric.slowupdate();
-        app_myelectric.fastupdateinst = setInterval(app_myelectric.fastupdate,2000);
+        app_myelectric.fastupdateinst = setInterval(app_myelectric.fastupdate,10000);
         app_myelectric.slowupdateinst = setInterval(app_myelectric.slowupdate,60000);
     },
     
@@ -178,6 +178,7 @@ var app_myelectric = {
        var use = app_myelectric.config.use.value;
        var use_kwh = app_myelectric.config.use_kwh.value;
     
+
         if (app_myelectric.viewmode=="energy") {
             scale = 1;
             $('.myelectric-view-cost').attr('style', 'color: ');
@@ -343,7 +344,7 @@ var app_myelectric = {
         var month_kwh = alltime_kwh - (app_myelectric.startofmonth[1]);
         $("#myelectric_month_kwh").html(Math.round(scale*month_kwh));
         var days = ((feeds[use_kwh].time - (app_myelectric.startofmonth[0]*0.001))/86400);
-        $("#myelectric_month_kwhd").html((scale*month_kwh/days).toFixed(1));
+        $("#myelectric_month_kwhd").html((scale*month_kwh/days).toFixed(2));
         // -------------------------------------------------------------------------------------------------------- 
         // YEAR: repeat same process as above (scale is unitcost)
         var time = new Date(now.getFullYear(),0,1).getTime();
@@ -387,10 +388,15 @@ var app_myelectric = {
         
         var interval = 86400;
         var now = new Date();
-        var end = Math.floor(now.getTime() * 0.001);
-        var start = end - interval * Math.round(graph_bars.width/30);
+        var timezone = Math.abs(Math.floor(now.getTimezoneOffset()*60));
+	var end = Math.floor(((now.getTime()*0.001)+timezone)/interval)*interval;
+
+        end -= timezone;
+        start = end - (interval * Math.round(graph_bars.width/30));
+        var EndTime = end * 1000;
+        var StartTime = start * 1000;
         
-        var result = feed.getdataDMY(use_kwh,start*1000,end*1000,"daily");
+        var result = feed.getdata(use_kwh,StartTime,EndTime,interval,1,1);
 
         var data = [];
         // remove nan values from the end.
@@ -404,17 +410,17 @@ var app_myelectric = {
         
         if (data.length>0) {
             var lastday = data[data.length-1][0];
-            
-//            var d = new Date();
-//            d.setHours(0,0,0,0);
-//            if (lastday==d.getTime()) {
+
+            var d = new Date();
+            d.setHours(0,0,0,0);
+            if (lastday==d.getTime()) {
                 // last day in kwh data matches start of today from the browser's perspective
                 // which means its safe to append today kwh value
                 var next = data[data.length-1][0] + (interval*1000);
                 if (app_myelectric.feeds[use_kwh]!=undefined) {
                     data.push([next,app_myelectric.feeds[use_kwh].value*1.0]);
                 }
-//            }
+            }
         
             // Calculate the daily totals by subtracting each day from the day before
             
@@ -428,7 +434,7 @@ var app_myelectric = {
         
         var usetoday_kwh = 0;
         if (app_myelectric.daily.length>0) {
-            usetoday_kwh = app_myelectric.daily[app_myelectric.daily.length-1][1];
+		usetoday_kwh = app_myelectric.daily[app_myelectric.daily.length-1][1];
         }
         $("#myelectric_usetoday").html((usetoday_kwh).toFixed(1));
 

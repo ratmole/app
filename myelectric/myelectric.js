@@ -292,7 +292,8 @@ var app_myelectric = {
         if (timewindowhours<=1) options.xaxis.major_tick = 0.125*3600*1000;
 
         options.xaxis.minor_tick = options.xaxis.major_tick / 4;
-        
+
+
         
         var series = {
             "solar": {
@@ -304,7 +305,20 @@ var app_myelectric = {
                 data: timeseries.data("use")
             }
         };
-        
+
+	// find out max and min values of data
+	var ymax = undefined;
+
+	var dataq = series.use.data;
+	for (z in dataq)
+	{
+		if (ymax==undefined) ymax = dataq[z][1];
+		if (dataq[z][1]>ymax) ymax = dataq[z][1];
+	}
+
+	options.yaxis.major_tick = (Math.ceil(ymax/100)*10);
+	options.yaxis.minor_tick = options.yaxis.major_tick/4;
+
         graph_lines.draw("myelectric_placeholder_power",series,options);
         $(".ajax-loader").hide();
 
